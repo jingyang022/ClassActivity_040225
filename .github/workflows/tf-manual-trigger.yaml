@@ -1,0 +1,52 @@
+name: "Terraform Destroy"
+run-name: Terraform Manual Trigger
+
+on:
+  workflow_dispatch:
+    inputs:
+      # Working directory input from user.
+      resource:
+        type: choice
+        description: Choose the resource
+        options:
+        - name_of_dir1
+        - name_of_dir2
+      # Terraform action you want to perform
+      action:
+        description: 'Terraform Action to Perform'
+        type: choice
+        options:
+        - Terraform_apply
+        - Terraform_destroy
+
+env:            
+  AWS_REGION: ap-southeast-1 
+
+jobs:
+    terraform_destroy:
+    name: "Terraform_destroy"
+    if: ${{ github.event.inputs.action == 'Terraform_destroy' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ github.event.inputs.resource }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+   
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+   
+    - name: Terraform Init
+      run: terraform init
+
+    - name: Terraform Destroy
+      run: terraform apply --auto-approve
